@@ -81,6 +81,7 @@ export default function TripPage() {
   const [historyPoints, setHistoryPoints] = useState<Array<{ lat: number; lng: number; createdAt: string }>>([]);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
+  const mapRef = useRef<LeafletMap | null>(null);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
   const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
   const [socketError, setSocketError] = useState<string | null>(null);
@@ -292,7 +293,10 @@ export default function TripPage() {
             zoom={13}
             scrollWheelZoom
             className="h-full w-full"
-            whenCreated={setMapInstance}
+            ref={mapRef}
+            whenReady={() => {
+              if (mapRef.current) setMapInstance(mapRef.current);
+            }}
           >
             <TileLayer
               attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'

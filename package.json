@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node ./scripts/dev.js",
     "build": "next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",

@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Copiloto (Geolocation Sharing)
 
-## Getting Started
+Aplicação demo para compartilhar localização em tempo real, com arquitetura pensada para **engenharia de software de verdade** (pequenos commits, testes, CI, segurança e refatoração contínua).
 
-First, run the development server:
+## 🚀 Tecnologias
+
+- **Next.js (App Router)**
+- **TypeScript**
+- **Tailwind CSS**
+- **Socket.IO** para tempo real
+- **Prisma + SQLite** para persistência leve
+- **Jest** para testes unitários + mocks
+- **GitHub Actions** para CI
+
+## 🧩 Como rodar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+JWT_SECRET=uma-senha-secreta npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> 💡 Dica: o script `dev` já remove automaticamente o arquivo de lock do Next.js (`.next/dev/lock`) caso ele exista, evitando a mensagem de erro de "lock" quando o servidor anterior não encerrou corretamente.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> 💡 Dica: o script `dev` já remove automaticamente o arquivo de lock do Next.js (`.next/dev/lock`) caso ele exista, evitando a mensagem de erro de "lock" quando o servidor anterior não encerrou corretamente.
 
-## Learn More
+## ✅ Scripts úteis
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - servidor de desenvolvimento
+- `npm run build` - build de produção
+- `npm run start` - inicia o build em produção
+- `npm run lint` - executa ESLint
+- `npm run test` - roda testes
+- `npm run typecheck` - checa tipos TypeScript
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🧪 Testes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Este projeto vem com um conjunto básico de testes unitários para a camada de API.
 
-## Deploy on Vercel
+```bash
+npm test
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗂 Estrutura relevante
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app` — frontend (Next.js App Router)
+- `src/pages/api` — rotas de API (inclui WebSocket / Socket.IO)
+- `src/lib` — helpers (Prisma, Socket, API client)
+- `prisma` — esquema e migrações
+
+---
+
+> Baseado nas diretrizes do Akita: commits pequenos, testes como rede de segurança, refatoração contínua e documentação como investimento.

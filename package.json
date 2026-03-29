@@ -7,7 +7,7 @@
     "build": "next build",
     "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
-    "render-build": "prisma generate && prisma migrate deploy && next build",
+    "render-build": "prisma generate && next build",
     "start": "next start",
     "prestart": "prisma migrate deploy",
     "render-start": "prisma migrate deploy && next start",

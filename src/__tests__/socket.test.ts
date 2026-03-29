@@ -13,9 +13,16 @@ describe('socket helper', () => {
     jest.clearAllMocks();
   });
 
-  it('creates socket with auth token when setAuthToken is called', () => {
-    const { getSocket, setAuthToken } = require('@/lib/socket');
-    const { io } = require('socket.io-client');
+  type MockSocket = {
+    connect: jest.Mock;
+    disconnect: jest.Mock;
+    connected: boolean;
+    auth: Record<string, unknown>;
+  };
+
+  it('creates socket with auth token when setAuthToken is called', async () => {
+    const { getSocket, setAuthToken } = await import('@/lib/socket');
+    const { io } = await import('socket.io-client');
 
     setAuthToken('my-token');
     getSocket();
@@ -29,14 +36,14 @@ describe('socket helper', () => {
     );
   });
 
-  it('reconnects socket when token changes', () => {
-    const { getSocket, setAuthToken } = require('@/lib/socket');
-    const socket = getSocket();
-    (socket as any).connected = true;
+  it('reconnects socket when token changes', async () => {
+    const { getSocket, setAuthToken } = await import('@/lib/socket');
+    const socket = getSocket() as unknown as MockSocket;
+    socket.connected = true;
 
     setAuthToken('other-token');
 
-    expect((socket as any).disconnect).toHaveBeenCalled();
-    expect((socket as any).connect).toHaveBeenCalled();
+    expect(socket.disconnect).toHaveBeenCalled();
+    expect(socket.connect).toHaveBeenCalled();
   });
 });

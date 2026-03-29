@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import React from 'react';
+import type { Socket } from 'socket.io-client';
 
 // Mocks for Next.js navigation hooks
 const pushMock = jest.fn();
@@ -12,7 +13,10 @@ jest.mock('next/navigation', () => ({
 
 // Mock next/dynamic to simply render a placeholder without leaking props into a DOM element
 jest.mock('next/dynamic', () => {
-  return () => () => <div data-testid="dynamic" />;
+  const DynamicMock = function DynamicMock() {
+    return <div data-testid="dynamic" />;
+  };
+  return () => DynamicMock;
 });
 
 // Mock leaflet so it doesn't try to access browser APIs during tests
@@ -47,32 +51,67 @@ jest.mock('@/lib/socket', () => ({
 // This prevents errors when the component calls navigator.geolocation.watchPosition
 Object.defineProperty(global.navigator, 'geolocation', {
   value: {
-    watchPosition: jest.fn().mockImplementation((success) => {
-      success({ coords: { latitude: 10, longitude: 20 } });
+    watchPosition: jest.fn().mockImplementation((success: (pos: GeolocationPosition) => void) => {
+      const coords: GeolocationCoordinates = {
+        latitude: 10,
+        longitude: 20,
+        accuracy: 1,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+        toJSON: () => ({
+          latitude: 10,
+          longitude: 20,
+          accuracy: 1,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        }),
+      };
+
+      const position: GeolocationPosition = {
+        coords,
+        timestamp: Date.now(),
+        toJSON: () => ({
+          coords: coords.toJSON(),
+          timestamp: Date.now(),
+        }),
+      };
+
+      success(position);
       return 1;
     }),
     clearWatch: jest.fn(),
   },
 });
 
-// Provide a minimal window.socket so the component can call window.socket?.on/off
-// (as it does in useEffect)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(global as any).window = global as any;
+type SocketEventHandler = (...args: unknown[]) => void;
 
-const socketHandlers: Record<string, (...args: any[]) => void> = {};
-const socketOnMock = jest.fn((event: string, cb: (...args: any[]) => void) => {
-  socketHandlers[event] = cb;
-});
-const socketOffMock = jest.fn((event: string) => {
-  delete socketHandlers[event];
-});
+const socketHandlers: Record<string, SocketEventHandler> = {};
 let locationUpdateHandler: ((payload: { lat: number; lng: number }) => void) | null = null;
 
-;(global as any).window.socket = {
-  on: socketOnMock,
-  off: socketOffMock,
-};
+const mockSocket = {} as unknown as Socket;
+
+const on = ((event: string, listener: SocketEventHandler) => {
+  socketHandlers[event] = listener;
+  if (event === 'location:update') {
+    locationUpdateHandler = listener as (payload: { lat: number; lng: number }) => void;
+  }
+  return mockSocket as Socket;
+}) as unknown as Socket['on'];
+
+const off = ((event: string) => {
+  delete socketHandlers[event];
+  if (event === 'location:update') {
+    locationUpdateHandler = null;
+  }
+  return mockSocket as Socket;
+}) as unknown as Socket['off'];
+
+Object.assign(mockSocket as unknown as Record<string, unknown>, { on, off });
+window.socket = mockSocket;
 
 import TripPage from '@/app/trip/[code]/page';
 
@@ -82,18 +121,6 @@ describe('TripPage', () => {
     Object.keys(socketHandlers).forEach((key) => delete socketHandlers[key]);
     useParamsMock.mockReturnValue({ code: 'test-code' });
     locationUpdateHandler = null;
-    socketOnMock.mockImplementation((event: string, cb: (...args: any[]) => void) => {
-      socketHandlers[event] = cb;
-      if (event === 'location:update') {
-        locationUpdateHandler = cb as (payload: { lat: number; lng: number }) => void;
-      }
-    });
-    socketOffMock.mockImplementation((event: string) => {
-      delete socketHandlers[event];
-      if (event === 'location:update') {
-        locationUpdateHandler = null;
-      }
-    });
 
     getTripMock.mockResolvedValue({
       id: '1',

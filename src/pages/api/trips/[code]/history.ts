@@ -19,7 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const limit = Math.min(Math.max(Number(rawLimit ?? 50), 1), 200);
   const cursor = typeof rawCursor === 'string' ? rawCursor : undefined;
 
-  const where: Record<string, any> = {
+  type FindManyArgs = Parameters<typeof prisma.locationPoint.findMany>[0];
+  type WhereInput = NonNullable<FindManyArgs>['where'];
+
+  const where: WhereInput = {
     trip: { shareCode: code },
   };
 

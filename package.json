@@ -9,6 +9,7 @@
     "postinstall": "prisma generate",
     "render-build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
+    "prestart": "prisma migrate deploy",
     "render-start": "prisma migrate deploy && next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",

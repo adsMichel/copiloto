@@ -8,7 +8,28 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const databaseUrl = process.env.DATABASE_URL ?? 'file:./dev.db';
+function normalizeSqliteUrlForBetterSqlite3(url: string): string {
+  if (url === ':memory:') return url;
+
+  // Prisma's SQLite connection string is usually `file:./dev.db`.
+  // better-sqlite3 expects a filesystem path (e.g. `dev.db`), and on Windows a literal
+  // `file:...` filename is invalid (due to `:`), causing runtime failures (500s).
+  if (url.startsWith('file:')) {
+    let rest = url.slice('file:'.length);
+
+    // Handle file:// URLs as well, just in case.
+    if (rest.startsWith('//')) rest = rest.slice(2);
+
+    // Convert file:/C:/path (or /C:/path) to C:/path on Windows-style paths.
+    if (rest.startsWith('/') && /^[A-Za-z]:/.test(rest.slice(1))) rest = rest.slice(1);
+
+    return decodeURIComponent(rest);
+  }
+
+  return url;
+}
+
+const databaseUrl = normalizeSqliteUrlForBetterSqlite3(process.env.DATABASE_URL ?? 'file:./dev.db');
 
 const sqliteAdapter = new PrismaBetterSqlite3({
   url: databaseUrl,

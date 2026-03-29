@@ -39,6 +39,7 @@ export default function TripPage() {
   const tripCodeRaw = params?.code;
   const tripCode = Array.isArray(tripCodeRaw) ? tripCodeRaw[0] : tripCodeRaw;
   const isValidTripCode = typeof tripCode === 'string' && tripCode.length > 0 && tripCode !== 'undefined';
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,14 +79,17 @@ export default function TripPage() {
       setLeafletIconsReady(true);
     });
   }, []);
+
   const [trip, setTrip] = useState<{ shareCode: string; lastLatitude?: number; lastLongitude?: number } | null>(null);
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [path, setPath] = useState<Array<[number, number]>>([]);
   const [historyPoints, setHistoryPoints] = useState<Array<{ lat: number; lng: number; createdAt: string }>>([]);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
+
   const mapRef = useRef<LeafletMap | null>(null);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
+
   const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
   const [socketError, setSocketError] = useState<string | null>(null);
 
@@ -169,9 +173,11 @@ export default function TripPage() {
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
+
           // Update the local map immediately, even before socket echoes back.
           setPosition([lat, lng]);
           setPath((prev) => [...prev, [lat, lng]]);
+
           sendLocationUpdate(trip.shareCode, lat, lng);
         },
         (err) => {
@@ -230,7 +236,7 @@ export default function TripPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <p>Carregando viagem…</p>
+        <p>Carregando viagemâ€¦</p>
       </div>
     );
   }
@@ -251,6 +257,26 @@ export default function TripPage() {
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+  async function handleShare() {
+    if (!shareUrl) return;
+
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (navigator as any).share({
+          title: 'Copiloto',
+          text: 'Acompanhe minha viagem em tempo real',
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // user cancelled or unsupported payload; fallback to clipboard
+      }
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-white/10 bg-slate-900/60 px-6 py-5 backdrop-blur">
@@ -263,7 +289,11 @@ export default function TripPage() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="rounded-xl bg-white/10 px-3 py-2 text-sm">
-              Localização atual: {formatCoords(markerPosition ? Number(markerPosition[0]) : undefined, markerPosition ? Number(markerPosition[1]) : undefined)}
+              Localização atual:{' '}
+              {formatCoords(
+                markerPosition ? Number(markerPosition[0]) : undefined,
+                markerPosition ? Number(markerPosition[1]) : undefined
+              )}
             </div>
             <div className="rounded-xl bg-white/10 px-3 py-2 text-sm">
               Status de conexão: <span className="font-semibold">{socketStatus}</span>
@@ -273,10 +303,10 @@ export default function TripPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <button
                 type="button"
-                onClick={() => navigator.clipboard.writeText(shareUrl)}
+                onClick={handleShare}
                 className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950"
               >
-                Copiar link
+                Compartilhar viagem
               </button>
               <button
                 type="button"
@@ -307,21 +337,10 @@ export default function TripPage() {
               attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {mapInstance ? (
-              <MapViewUpdater center={markerPosition ?? initialPosition} map={mapInstance} />
-            ) : null}
+            {mapInstance ? <MapViewUpdater center={markerPosition ?? initialPosition} map={mapInstance} /> : null}
             {markerPosition && leafletIconsReady ? <Marker position={markerPosition} /> : null}
             {path.length > 1 ? <Polyline positions={path} pathOptions={{ color: '#38bdf8' }} /> : null}
           </MapContainer>
-        </div>
-
-        <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200">
-          <p className="mb-2">Para quem está acompanhando:</p>
-          <ul className="list-disc pl-5">
-            <li>Abra este link em outro dispositivo.</li>
-            <li>Seu navegador pode pedir permissão para acessar a localização.</li>
-            <li>Atualizações aparecem em tempo real via WebSocket.</li>
-          </ul>
         </div>
       </section>
     </main>

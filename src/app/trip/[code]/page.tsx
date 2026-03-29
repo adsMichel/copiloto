@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { LatLngExpression, Map as LeafletMap } from 'leaflet';
@@ -64,6 +64,8 @@ export default function TripPage() {
     }
   }, [isValidTripCode, router]);
 
+  const [leafletIconsReady, setLeafletIconsReady] = useState(false);
+
   // Fix Leaflet marker icons when bundling with Next.js / Turbopack.
   // Leaflet expects `window` to exist at import time, so we load it dynamically.
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function TripPage() {
         iconUrl: '/marker-icon.png',
         shadowUrl: '/marker-shadow.png',
       });
+      setLeafletIconsReady(true);
     });
   }, []);
   const [trip, setTrip] = useState<{ shareCode: string; lastLatitude?: number; lastLongitude?: number } | null>(null);
@@ -87,6 +90,11 @@ export default function TripPage() {
   const [socketError, setSocketError] = useState<string | null>(null);
 
   const watchId = useRef<number | null>(null);
+
+  const handleMapRef = useCallback((map: LeafletMap | null) => {
+    mapRef.current = map;
+    setMapInstance(map);
+  }, []);
 
   useEffect(() => {
     if (!isValidTripCode) return;
@@ -293,10 +301,7 @@ export default function TripPage() {
             zoom={13}
             scrollWheelZoom
             className="h-full w-full"
-            ref={mapRef}
-            whenReady={() => {
-              if (mapRef.current) setMapInstance(mapRef.current);
-            }}
+            ref={handleMapRef}
           >
             <TileLayer
               attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -305,7 +310,7 @@ export default function TripPage() {
             {mapInstance ? (
               <MapViewUpdater center={markerPosition ?? initialPosition} map={mapInstance} />
             ) : null}
-            {markerPosition ? <Marker position={markerPosition} /> : null}
+            {markerPosition && leafletIconsReady ? <Marker position={markerPosition} /> : null}
             {path.length > 1 ? <Polyline positions={path} pathOptions={{ color: '#38bdf8' }} /> : null}
           </MapContainer>
         </div>

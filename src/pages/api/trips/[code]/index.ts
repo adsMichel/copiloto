@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
+import { getTripLastLocation } from '@/lib/locationCache';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const {
@@ -26,6 +27,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!trip) {
       return res.status(404).json({ error: 'Trip not found' });
+    }
+
+    const cached = getTripLastLocation(code);
+    if (cached) {
+      // Prefer the freshest known point for initial page load (even if we persist history less frequently).
+      // This is best-effort and per-process (single instance).
+      return res.status(200).json({
+        ...trip,
+        lastLatitude: cached.lat,
+        lastLongitude: cached.lng,
+      });
     }
 
     return res.status(200).json(trip);

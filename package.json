@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "node ./scripts/dev.js",
     "build": "next build",
+    "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
+    "render-build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
+    "render-start": "prisma migrate deploy && next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",

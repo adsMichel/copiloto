@@ -34,12 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(201).json({ shareCode: trip.shareCode, token });
   } catch (err) {
     console.error('[api/trips] unhandled error', err);
-    const detail =
-      process.env.NODE_ENV === 'development'
-        ? err instanceof Error
-          ? err.message
-          : String(err)
-        : undefined;
+
+    const includeDetail =
+      process.env.NODE_ENV === 'development' || process.env.DEBUG_API_ERRORS === '1';
+
+    const detail = includeDetail
+      ? err instanceof Error
+        ? err.message
+        : String(err)
+      : undefined;
+
     return res.status(500).json({ error: 'Internal server error', ...(detail ? { detail } : {}) });
   }
 }

@@ -29,7 +29,12 @@ function normalizeSqliteUrlForBetterSqlite3(url: string): string {
   return url;
 }
 
-const databaseUrl = normalizeSqliteUrlForBetterSqlite3(process.env.DATABASE_URL ?? 'file:./dev.db');
+const defaultDatabaseUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'file:/tmp/dev.db'
+    : 'file:./dev.db';
+
+const databaseUrl = normalizeSqliteUrlForBetterSqlite3(process.env.DATABASE_URL ?? defaultDatabaseUrl);
 
 const sqliteAdapter = new PrismaBetterSqlite3({
   url: databaseUrl,

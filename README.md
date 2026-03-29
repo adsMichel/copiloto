@@ -52,3 +52,18 @@ npm test
 ---
 
 > Baseado nas diretrizes do Akita: commits pequenos, testes como rede de segurança, refatoração contínua e documentação como investimento.
+
+## Deploy (Render.com)
+
+Este projeto usa **SQLite**. Em ambientes como Render, prefira um **disco persistente** para nao perder dados a cada deploy.
+
+1. Configure variaveis de ambiente:
+   - `JWT_SECRET` (obrigatorio em producao)
+   - `DATABASE_URL` (recomendado): `file:/var/data/dev.db`
+   - (opcional para diagnostico temporario) `DEBUG_API_ERRORS=1`
+
+2. Crie um Persistent Disk e monte em `/var/data`.
+
+3. Use estes comandos no Render:
+   - Build Command: `npm ci && npm run render-build`
+   - Start Command: `npm run render-start`
